@@ -1,0 +1,35 @@
+name: publish
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Подготовить приложение
+        run: |
+          mkdir myapp
+          echo "print('hello from CI')" > myapp/main.py
+          echo "${{ github.run_number }}" > myapp/VERSION
+
+      - name: Упаковать артефакт
+        # 1. ВПИШИТЕ команду упаковки myapp в myapp-<номер>.tar.gz:
+        run: ____
+
+      - name: Опубликовать в Artifactory
+        run: |
+          # 2. ВПИШИТЕ флаг curl для загрузки файла:
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -u "${{ secrets.ART_USER }}:${{ secrets.ART_PASSWORD }}" \
+            ____ myapp-${{ github.run_number }}.tar.gz \
+            "${{ secrets.ART_URL }}/myapp-local/myapp/${{ github.run_number }}/myapp-${{ github.run_number }}.tar.gz")
+          # 4. ВПИШИТЕ код успешной загрузки:
+          if [ "$CODE" != "____" ]; then
+            echo "Публикация не удалась: HTTP $CODE"
+            exit 1
+          fi
+          echo "Опубликовано, код $CODE"
