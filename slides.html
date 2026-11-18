@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>JFrog Artifactory — менеджеры артефактов</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1e1e2e; color: #e6e6f0;
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+  }
+  .slide {
+    display: none; height: 100vh; padding: 6vh 8vw;
+    flex-direction: column; justify-content: center;
+  }
+  .slide.active { display: flex; }
+  h1 { font-size: 3.2rem; color: #89b4fa; margin-bottom: 2rem; }
+  h2 { font-size: 2.2rem; color: #89b4fa; margin-bottom: 1.6rem; }
+  p, li { font-size: 1.5rem; line-height: 1.55; }
+  ul { padding-left: 2rem; margin: 0.8rem 0; }
+  li { margin-bottom: 0.5rem; }
+  code, .code {
+    font-family: "SF Mono", Menlo, monospace;
+    background: #313244; color: #a6e3a1;
+    padding: 0.1em 0.4em; border-radius: 6px; font-size: 0.85em;
+  }
+  pre {
+    font-family: "SF Mono", Menlo, monospace;
+    background: #11111b; color: #a6e3a1; font-size: 1.15rem;
+    padding: 1.2rem 1.5rem; border-radius: 10px; margin: 1rem 0;
+    overflow-x: auto; line-height: 1.5;
+  }
+  pre .c { color: #6c7086; }  /* комментарии */
+  pre .k { color: #cba6f7; }  /* ключевые слова */
+  .hl { color: #f9e2af; font-weight: 600; }
+  .bad { color: #f38ba8; }
+  .ok { color: #a6e3a1; }
+  .flow { display: flex; align-items: center; gap: 0.8rem; margin: 1.2rem 0; flex-wrap: wrap; }
+  .box {
+    background: #313244; border: 2px solid #89b4fa; border-radius: 10px;
+    padding: 0.8rem 1.4rem; font-size: 1.3rem; text-align: center;
+  }
+  .box.small { font-size: 1.05rem; padding: 0.5rem 1rem; }
+  .arrow { color: #89b4fa; font-size: 1.8rem; }
+  .note { color: #a6adc8; font-size: 1.15rem; margin-top: 1.2rem; }
+  table { border-collapse: collapse; margin: 1rem 0; }
+  th, td { border: 1px solid #45475a; padding: 0.6rem 1.2rem; font-size: 1.25rem; text-align: left; }
+  th { background: #313244; color: #89b4fa; }
+  #counter {
+    position: fixed; bottom: 2vh; right: 3vw;
+    color: #6c7086; font-size: 1rem;
+  }
+  #hint { position: fixed; bottom: 2vh; left: 3vw; color: #45475a; font-size: 0.95rem; }
+</style>
+</head>
+<body>
+
+<section class="slide">
+  <h1>Менеджеры артефактов</h1>
+  <p>JFrog Artifactory: поднимаем свой стенд</p>
+  <p class="note">Основы разработки · практическое занятие</p>
+</section>
+
+<section class="slide">
+  <h2>Проблема: куда девать результат сборки?</h2>
+  <p>Вы собрали программу. Как передать её коллеге или на сервер?</p>
+  <ul>
+    <li>мессенджер / почта — <span class="bad">нет версий, нет истории</span></li>
+    <li>общая папка — <span class="bad">«final_v2_FINAL.zip»</span></li>
+    <li>git — <span class="bad">репозиторий раздувается, бинарники там не должны жить</span></li>
+  </ul>
+  <p class="note">Нужно место, где бинарные файлы хранятся <span class="hl">с версиями и контролем целостности</span>.</p>
+</section>
+
+<section class="slide">
+  <h2>Что такое артефакт</h2>
+  <p><span class="hl">Артефакт</span> — результат сборки проекта, готовый к распространению:</p>
+  <ul>
+    <li>архив <code>.tar.gz</code>, <code>.zip</code></li>
+    <li>пакет: <code>.jar</code>, <code>.deb</code>, <code>.whl</code>, npm-пакет</li>
+    <li>docker-образ</li>
+    <li>отчёт, документация, что угодно бинарное</li>
+  </ul>
+  <p class="note">Артефакт ≠ исходный код. Исходники — в git, артефакты — в менеджере артефактов.</p>
+</section>
+
+<section class="slide">
+  <h2>Версионирование: SemVer</h2>
+  <p>У каждого артефакта есть версия. Общепринятый формат — <span class="hl">Semantic Versioning</span>:</p>
+  <pre>1.0.0
+│ │ └── <span class="k">PATCH</span> — исправления ошибок
+│ └────── <span class="k">MINOR</span> — новая функция, совместимость сохранена
+└──────── <span class="k">MAJOR</span> — ломающие изменения</pre>
+  <p>Сегодня будем выпускать <code>myapp-1.0.0</code>, <code>myapp-1.0.1</code>…</p>
+</section>
+
+<section class="slide">
+  <h2>Менеджер артефактов</h2>
+  <p>Аналогия: <code>git</code> — для исходников, <span class="hl">Artifactory</span> — для бинарников.</p>
+  <p>Что он даёт:</p>
+  <ul>
+    <li>хранение артефактов с версиями и историей</li>
+    <li>контрольные суммы и целостность</li>
+    <li>разграничение прав (кто может публиковать, кто — только скачивать)</li>
+    <li>кэширование внешних репозиториев</li>
+    <li>единая точка, откуда CI/CD забирает сборки</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>Кто есть на рынке</h2>
+  <table>
+    <tr><th>Продукт</th><th>Особенность</th></tr>
+    <tr><td><b>JFrog Artifactory</b></td><td>универсальный, де-факто стандарт в enterprise</td></tr>
+    <tr><td>Sonatype Nexus</td><td>главный конкурент, похожие возможности</td></tr>
+    <tr><td>GitLab Packages</td><td>встроен в GitLab</td></tr>
+    <tr><td>Harbor</td><td>специализация — docker-образы</td></tr>
+  </table>
+  <p class="note">Мы ставим <b>Artifactory OSS</b> — бесплатную версию. Про её ограничения — отдельный слайд.</p>
+</section>
+
+<section class="slide">
+  <h2>Наш стенд: два контейнера</h2>
+  <div class="flow">
+    <div class="box">docker compose</div>
+    <span class="arrow">→</span>
+    <div class="box">postgres<br><small>база данных</small></div>
+    <div class="box">artifactory<br><small>:8081 API · :8082 UI</small></div>
+  </div>
+  <ul>
+    <li>Раньше в Artifactory была встроенная база Derby. <span class="bad">В свежих версиях её убрали</span> — нужен PostgreSQL.</li>
+    <li>Параметры подключения передаём через <span class="hl">переменные окружения</span> в compose-файле.</li>
+    <li>Данные — в <span class="hl">томах</span> (volumes): контейнеры можно пересоздавать, данные останутся.</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>Из прошлых занятий нам понадобится</h2>
+  <ul>
+    <li><code>tar -czf app.tar.gz -C dir .</code> — упаковать каталог</li>
+    <li><code>curl</code> — HTTP-запросы из терминала</li>
+    <li><code>shasum -a 256 file</code> — контрольная сумма</li>
+    <li>конвейеры <code>cmd1 | cmd2</code>, переменные, <code>$1</code> в скриптах</li>
+    <li><code>sort -V</code> — сортировка версий</li>
+  </ul>
+  <p class="note">Всё это сегодня соберётся в настоящий пайплайн публикации.</p>
+</section>
+
+<section class="slide">
+  <h2>Типы репозиториев в Artifactory</h2>
+  <div class="flow">
+    <div class="box small">ваши сборки<br>→ <b>local</b></div>
+    <div class="box small">внешний мир<br>→ <b>remote</b> (кэш-прокси)</div>
+    <div class="box small">объединение<br>→ <b>virtual</b></div>
+  </div>
+  <ul>
+    <li><b>local</b> — ваши собственные артефакты (сегодня работаем с ним)</li>
+    <li><b>remote</b> — прокси к Maven Central и т.п.: первый запрос тянет из интернета, следующие отдаются из кэша мгновенно</li>
+    <li><b>virtual</b> — один URL поверх нескольких репозиториев</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>Контрольные суммы</h2>
+  <p><span class="hl">Хэш</span> (sha256) — «отпечаток» файла. Изменился хоть один байт → сумма другая.</p>
+  <pre>$ shasum -a 256 myapp-1.0.0.tar.gz
+63b52a326a651a67bc9b5182e402b3b41d9c596aafce12eb24df20a59ce1203e</pre>
+  <ul>
+    <li>Artifactory считает суммы при загрузке и отдаёт их в ответе</li>
+    <li>Скачали файл → сверили сумму → уверены, что файл не битый и не подменён</li>
+    <li>Заголовок <code>X-Checksum-Sha256</code> — проверка прямо при загрузке</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>REST API за две минуты</h2>
+  <p>Artifactory управляется HTTP-запросами — значит, из bash, через <code>curl</code>:</p>
+  <table>
+    <tr><th>Метод</th><th>Смысл</th><th>Пример</th></tr>
+    <tr><td><code>GET</code></td><td>получить</td><td>скачать артефакт, список репозиториев</td></tr>
+    <tr><td><code>PUT</code></td><td>создать/заменить</td><td>загрузить файл (<code>-T</code>)</td></tr>
+    <tr><td><code>POST</code></td><td>действие</td><td>поиск (AQL)</td></tr>
+    <tr><td><code>DELETE</code></td><td>удалить</td><td>стереть старую версию</td></tr>
+  </table>
+  <p>Авторизация: <code>curl -u admin:пароль ...</code> (Basic Auth — логин и пароль в каждом запросе).</p>
+</section>
+
+<section class="slide">
+  <h2>HTTP-коды, которые мы увидим</h2>
+  <table>
+    <tr><th>Код</th><th>Значение</th><th>Когда встретим</th></tr>
+    <tr><td class="ok">200</td><td>OK</td><td>скачивание, списки</td></tr>
+    <tr><td class="ok">201</td><td>Created</td><td>успешная загрузка артефакта</td></tr>
+    <tr><td class="bad">400</td><td>Bad Request</td><td>функция есть только в Pro</td></tr>
+    <tr><td class="bad">401</td><td>Unauthorized</td><td>неверный логин/пароль</td></tr>
+    <tr><td class="bad">403</td><td>Forbidden</td><td>прав не хватает (задача C3)</td></tr>
+    <tr><td class="bad">404</td><td>Not Found</td><td>опечатка в пути</td></tr>
+    <tr><td class="bad">409</td><td>Conflict</td><td>контрольная сумма не сошлась (B2)</td></tr>
+  </table>
+  <p class="note">Скрипт должен проверять код ответа — тишина ≠ успех.</p>
+</section>
+
+<section class="slide">
+  <h2>Где Artifactory живёт в CI/CD</h2>
+  <div class="flow">
+    <div class="box small">git push</div><span class="arrow">→</span>
+    <div class="box small">CI: сборка<br>+ тесты</div><span class="arrow">→</span>
+    <div class="box small"><b>Artifactory</b><br>publish</div><span class="arrow">→</span>
+    <div class="box small">deploy<br>на сервер</div>
+  </div>
+  <ul>
+    <li>Сборка публикует артефакт — наш <code>publish.sh</code></li>
+    <li>Сервер скачивает конкретную версию — наш <code>deploy.sh</code></li>
+    <li>Сегодня соберём этот круг руками на bash</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>Promotion: dev → prod</h2>
+  <p>В прод попадает <span class="hl">тот же самый бинарник</span>, что прошёл тесты — не пересборка.</p>
+  <ul>
+    <li><code>myapp-dev-local</code> — куда публикует CI</li>
+    <li><code>myapp-prod-local</code> — куда промоутится проверенная версия</li>
+    <li>Пересобрать «то же самое» нельзя: другой коммит, другая среда сборки — и в проде не то, что тестировали</li>
+    <li>Контроль: sha256 в dev и в prod обязан совпадать</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>Права доступа</h2>
+  <ul>
+    <li>Принцип минимальных прав: CI-пользователь умеет <span class="hl">читать и публиковать</span>, но <span class="bad">не удалять</span></li>
+    <li>Удаление — путь к «кто-то стёр прод-артефакт»</li>
+    <li>Логин/пароль в скриптах — только для учебного стенда; в жизни — <span class="hl">токены</span> и переменные окружения</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>OSS vs Pro: что мы встретим</h2>
+  <table>
+    <tr><th>Возможность</th><th>OSS (у нас)</th><th>Pro</th></tr>
+    <tr><td>Загрузка/скачивание артефактов</td><td class="ok">да</td><td class="ok">да</td></tr>
+    <tr><td>Поиск AQL, хранилище, права</td><td class="ok">да</td><td class="ok">да</td></tr>
+    <tr><td>Создание репозитория через REST</td><td class="bad">нет, только UI</td><td class="ok">да</td></tr>
+    <tr><td>API копирования / promotion</td><td class="bad">нет</td><td class="ok">да</td></tr>
+    <tr><td>Форматы пакетов</td><td>generic, maven, gradle…</td><td>все (npm, docker…)</td></tr>
+  </table>
+  <p class="note">Ошибка <code>This REST API is available only in Artifactory Pro</code> — это ожидаемо, а не «сломалось».</p>
+</section>
+
+<section class="slide">
+  <h2>План практики</h2>
+  <ul>
+    <li><span class="hl">Блок A</span> — поднять стенд, создать репозиторий, опубликовать и скачать артефакт</li>
+    <li><span class="hl">Блок B</span> — API: паспорт артефакта, проверка checksum, поиск AQL, чистка старых версий</li>
+    <li><span class="hl">Блок C</span> — <code>publish.sh</code> + <code>deploy.sh</code>, права, dev→prod</li>
+  </ul>
+  <p>Материалы: <code>README.md</code> (раздатка) и <code>tasks.md</code> (задачи).</p>
+  <p class="note">Кто дойдёт до конца блока C — соберёт настоящий мини-CI/CD своими руками.</p>
+</section>
+
+<section class="slide">
+  <h2>Итоги</h2>
+  <ul>
+    <li>Артефакты живут не в git, а в менеджере артефактов</li>
+    <li>Версия + контрольная сумма = доверие к бинарнику</li>
+    <li>local / remote / virtual — три типа репозиториев</li>
+    <li>Всё управляется через REST API — значит, автоматизируется bash'ем</li>
+    <li>В прод едет тот же бит, что тестировался</li>
+  </ul>
+  <p class="note">Вопросы?</p>
+</section>
+
+<div id="counter"></div>
+<div id="hint">← → — навигация</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let cur = 0;
+  const counter = document.getElementById('counter');
+  function show(i) {
+    cur = Math.max(0, Math.min(i, slides.length - 1));
+    slides.forEach((s, n) => s.classList.toggle('active', n === cur));
+    counter.textContent = (cur + 1) + ' / ' + slides.length;
+    location.hash = cur;
+  }
+  document.addEventListener('keydown', e => {
+    if (['ArrowRight', ' ', 'PageDown'].includes(e.key)) show(cur + 1);
+    if (['ArrowLeft', 'PageUp'].includes(e.key)) show(cur - 1);
+    if (e.key === 'Home') show(0);
+    if (e.key === 'End') show(slides.length - 1);
+  });
+  document.addEventListener('click', () => show(cur + 1));
+  show(parseInt(location.hash.slice(1)) || 0);
+</script>
+</body>
+</html>
