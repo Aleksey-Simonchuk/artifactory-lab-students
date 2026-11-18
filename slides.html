@@ -11,15 +11,15 @@
     overflow: hidden;
   }
   .slide {
-    display: none; height: 100vh; padding: 6vh 8vw;
+    display: none; height: 100vh; padding: 5vh 7vw;
     flex-direction: column; justify-content: center;
   }
   .slide.active { display: flex; }
-  h1 { font-size: 3.2rem; color: #89b4fa; margin-bottom: 2rem; }
-  h2 { font-size: 2.2rem; color: #89b4fa; margin-bottom: 1.6rem; }
-  p, li { font-size: 1.5rem; line-height: 1.55; }
-  ul { padding-left: 2rem; margin: 0.8rem 0; }
-  li { margin-bottom: 0.5rem; }
+  h1 { font-size: 3rem; color: #89b4fa; margin-bottom: 1.8rem; }
+  h2 { font-size: 2rem; color: #89b4fa; margin-bottom: 1.3rem; }
+  p, li { font-size: 1.35rem; line-height: 1.5; }
+  ul { padding-left: 2rem; margin: 0.7rem 0; }
+  li { margin-bottom: 0.45rem; }
   code, .code {
     font-family: "SF Mono", Menlo, monospace;
     background: #313244; color: #a6e3a1;
@@ -27,25 +27,25 @@
   }
   pre {
     font-family: "SF Mono", Menlo, monospace;
-    background: #11111b; color: #a6e3a1; font-size: 1.15rem;
-    padding: 1.2rem 1.5rem; border-radius: 10px; margin: 1rem 0;
-    overflow-x: auto; line-height: 1.5;
+    background: #11111b; color: #a6e3a1; font-size: 1.05rem;
+    padding: 1rem 1.3rem; border-radius: 10px; margin: 0.8rem 0;
+    overflow-x: auto; line-height: 1.45;
   }
-  pre .c { color: #6c7086; }  /* комментарии */
-  pre .k { color: #cba6f7; }  /* ключевые слова */
+  pre .c { color: #6c7086; }
+  pre .k { color: #cba6f7; }
   .hl { color: #f9e2af; font-weight: 600; }
   .bad { color: #f38ba8; }
   .ok { color: #a6e3a1; }
-  .flow { display: flex; align-items: center; gap: 0.8rem; margin: 1.2rem 0; flex-wrap: wrap; }
+  .flow { display: flex; align-items: center; gap: 0.7rem; margin: 1rem 0; flex-wrap: wrap; }
   .box {
     background: #313244; border: 2px solid #89b4fa; border-radius: 10px;
-    padding: 0.8rem 1.4rem; font-size: 1.3rem; text-align: center;
+    padding: 0.7rem 1.2rem; font-size: 1.15rem; text-align: center;
   }
-  .box.small { font-size: 1.05rem; padding: 0.5rem 1rem; }
-  .arrow { color: #89b4fa; font-size: 1.8rem; }
-  .note { color: #a6adc8; font-size: 1.15rem; margin-top: 1.2rem; }
-  table { border-collapse: collapse; margin: 1rem 0; }
-  th, td { border: 1px solid #45475a; padding: 0.6rem 1.2rem; font-size: 1.25rem; text-align: left; }
+  .box.small { font-size: 1rem; padding: 0.45rem 0.9rem; }
+  .arrow { color: #89b4fa; font-size: 1.6rem; }
+  .note { color: #a6adc8; font-size: 1.05rem; margin-top: 1rem; }
+  table { border-collapse: collapse; margin: 0.8rem 0; }
+  th, td { border: 1px solid #45475a; padding: 0.5rem 1rem; font-size: 1.1rem; text-align: left; }
   th { background: #313244; color: #89b4fa; }
   #counter {
     position: fixed; bottom: 2vh; right: 3vw;
@@ -56,10 +56,12 @@
 </head>
 <body>
 
+<!-- ======================= ТЕОРИЯ ======================= -->
+
 <section class="slide">
   <h1>Менеджеры артефактов</h1>
-  <p>JFrog Artifactory: поднимаем свой стенд</p>
-  <p class="note">Основы разработки · практическое занятие</p>
+  <p>JFrog Artifactory: поднимаем свой стенд и собираем мини-CI/CD на bash</p>
+  <p class="note">Основы разработки · практическое занятие · 2 пары</p>
 </section>
 
 <section class="slide">
@@ -80,9 +82,19 @@
     <li>архив <code>.tar.gz</code>, <code>.zip</code></li>
     <li>пакет: <code>.jar</code>, <code>.deb</code>, <code>.whl</code>, npm-пакет</li>
     <li>docker-образ</li>
-    <li>отчёт, документация, что угодно бинарное</li>
+    <li>отчёт, документация — что угодно бинарное</li>
   </ul>
   <p class="note">Артефакт ≠ исходный код. Исходники — в git, артефакты — в менеджере артефактов.</p>
+</section>
+
+<section class="slide">
+  <h2>Почему бинарники не хранят в git</h2>
+  <ul>
+    <li>git хранит <span class="hl">каждую версию каждого файла</span> навсегда — бинарники раздувают репозиторий до гигабайт</li>
+    <li>бинарник нельзя «посмотреть diff» — история git для него бесполезна</li>
+    <li>git не умеет: контрольные суммы, права на скачивание, кэш внешних пакетов, retention</li>
+  </ul>
+  <p>Вывод: git — про <span class="hl">исходники</span>, менеджер артефактов — про <span class="hl">результаты сборки</span>.</p>
 </section>
 
 <section class="slide">
@@ -102,7 +114,7 @@
   <ul>
     <li>хранение артефактов с версиями и историей</li>
     <li>контрольные суммы и целостность</li>
-    <li>разграничение прав (кто может публиковать, кто — только скачивать)</li>
+    <li>разграничение прав (кто публикует, кто только скачивает)</li>
     <li>кэширование внешних репозиториев</li>
     <li>единая точка, откуда CI/CD забирает сборки</li>
   </ul>
@@ -121,6 +133,18 @@
 </section>
 
 <section class="slide">
+  <h2>Жизненный цикл артефакта</h2>
+  <div class="flow">
+    <div class="box small">1. сборка<br><small>наш tar</small></div><span class="arrow">→</span>
+    <div class="box small">2. публикация<br><small>upload</small></div><span class="arrow">→</span>
+    <div class="box small">3. promotion<br><small>dev → prod</small></div><span class="arrow">→</span>
+    <div class="box small">4. деплой<br><small>download</small></div><span class="arrow">→</span>
+    <div class="box small">5. retention<br><small>чистка старых</small></div>
+  </div>
+  <p>Сегодня пройдём <span class="hl">все пять этапов</span> руками — это и есть программа лабораторной.</p>
+</section>
+
+<section class="slide">
   <h2>Наш стенд: два контейнера</h2>
   <div class="flow">
     <div class="box">docker compose</div>
@@ -133,6 +157,22 @@
     <li>Параметры подключения передаём через <span class="hl">переменные окружения</span> в compose-файле.</li>
     <li>Данные — в <span class="hl">томах</span> (volumes): контейнеры можно пересоздавать, данные останутся.</li>
   </ul>
+</section>
+
+<section class="slide">
+  <h2>Анатомия docker-compose.yml</h2>
+  <pre><span class="k">services:</span>
+  <span class="k">postgres:</span>            <span class="c"># контейнер №1 — база данных</span>
+    image: postgres:16-alpine
+    environment: [POSTGRES_USER, POSTGRES_PASSWORD, ...]
+    volumes: [postgres_data → /var/lib/postgresql/data]
+  <span class="k">artifactory:</span>         <span class="c"># контейнер №2 — сам сервис</span>
+    image: releases-docker.jfrog.io/jfrog/artifactory-oss
+    depends_on: postgres  <span class="c"># ждём базу</span>
+    environment: [JF_SHARED_DATABASE_URL=...postgres:5432...]
+    ports: ["8081:8081", "8082:8082"]  <span class="c"># наружу:внутрь</span>
+    volumes: [artifactory_data → /var/opt/jfrog/artifactory]</pre>
+  <p class="note">Найдите в файле каждый из этих блоков — задание 1 попросит об этом.</p>
 </section>
 
 <section class="slide">
@@ -155,9 +195,9 @@
     <div class="box small">объединение<br>→ <b>virtual</b></div>
   </div>
   <ul>
-    <li><b>local</b> — ваши собственные артефакты (сегодня работаем с ним)</li>
-    <li><b>remote</b> — прокси к Maven Central и т.п.: первый запрос тянет из интернета, следующие отдаются из кэша мгновенно</li>
-    <li><b>virtual</b> — один URL поверх нескольких репозиториев</li>
+    <li><b>local</b> — ваши собственные артефакты (базовые задания — про него)</li>
+    <li><b>remote</b> — прокси к Maven Central: первый запрос тянет из интернета, следующие отдаются из кэша мгновенно (pro06)</li>
+    <li><b>virtual</b> — один URL поверх нескольких репозиториев (pro07)</li>
   </ul>
 </section>
 
@@ -169,7 +209,7 @@
   <ul>
     <li>Artifactory считает суммы при загрузке и отдаёт их в ответе</li>
     <li>Скачали файл → сверили сумму → уверены, что файл не битый и не подменён</li>
-    <li>Заголовок <code>X-Checksum-Sha256</code> — проверка прямо при загрузке</li>
+    <li>Заголовок <code>X-Checksum-Sha256</code> — проверка прямо при загрузке (task14)</li>
   </ul>
 </section>
 
@@ -194,11 +234,11 @@
     <tr><td class="ok">201</td><td>Created</td><td>успешная загрузка артефакта</td></tr>
     <tr><td class="bad">400</td><td>Bad Request</td><td>функция есть только в Pro</td></tr>
     <tr><td class="bad">401</td><td>Unauthorized</td><td>неверный логин/пароль</td></tr>
-    <tr><td class="bad">403</td><td>Forbidden</td><td>прав не хватает (задача C3)</td></tr>
+    <tr><td class="bad">403</td><td>Forbidden</td><td>прав не хватает (pro04)</td></tr>
     <tr><td class="bad">404</td><td>Not Found</td><td>опечатка в пути</td></tr>
-    <tr><td class="bad">409</td><td>Conflict</td><td>контрольная сумма не сошлась (B2)</td></tr>
+    <tr><td class="bad">409</td><td>Conflict</td><td>контрольная сумма не сошлась (task14)</td></tr>
   </table>
-  <p class="note">Скрипт должен проверять код ответа — тишина ≠ успех.</p>
+  <p class="note">Скрипт должен проверять код ответа — тишина ≠ успех (pro02).</p>
 </section>
 
 <section class="slide">
@@ -210,9 +250,9 @@
     <div class="box small">deploy<br>на сервер</div>
   </div>
   <ul>
-    <li>Сборка публикует артефакт — наш <code>publish.sh</code></li>
-    <li>Сервер скачивает конкретную версию — наш <code>deploy.sh</code></li>
-    <li>Сегодня соберём этот круг руками на bash</li>
+    <li>Сборка публикует артефакт — наш <code>publish.sh</code> (pro02)</li>
+    <li>Сервер скачивает конкретную версию — наш <code>deploy.sh</code> (pro03)</li>
+    <li>Сегодня соберём этот круг руками на bash, а в pro10 — перепишем на GitHub Actions</li>
   </ul>
 </section>
 
@@ -223,16 +263,16 @@
     <li><code>myapp-dev-local</code> — куда публикует CI</li>
     <li><code>myapp-prod-local</code> — куда промоутится проверенная версия</li>
     <li>Пересобрать «то же самое» нельзя: другой коммит, другая среда сборки — и в проде не то, что тестировали</li>
-    <li>Контроль: sha256 в dev и в prod обязан совпадать</li>
+    <li>Контроль: sha256 в dev и в prod обязан совпадать (pro08)</li>
   </ul>
 </section>
 
 <section class="slide">
   <h2>Права доступа</h2>
   <ul>
-    <li>Принцип минимальных прав: CI-пользователь умеет <span class="hl">читать и публиковать</span>, но <span class="bad">не удалять</span></li>
+    <li>Принцип минимальных прав: CI-пользователь умеет <span class="hl">читать и публиковать</span>, но <span class="bad">не удалять</span> (pro04)</li>
     <li>Удаление — путь к «кто-то стёр прод-артефакт»</li>
-    <li>Логин/пароль в скриптах — только для учебного стенда; в жизни — <span class="hl">токены</span> и переменные окружения</li>
+    <li>Пароль в скрипте — только для учебного стенда; в жизни — <span class="hl">переменные окружения и секреты CI</span> (pro05)</li>
   </ul>
 </section>
 
@@ -249,15 +289,129 @@
   <p class="note">Ошибка <code>This REST API is available only in Artifactory Pro</code> — это ожидаемо, а не «сломалось».</p>
 </section>
 
+<!-- ======================= КАК ДЕЛАТЬ ЗАДАНИЯ ======================= -->
+
 <section class="slide">
-  <h2>План практики</h2>
+  <h1>Часть 2. Лабораторная</h1>
+  <p>Как устроены задания и как их выполнять</p>
+</section>
+
+<section class="slide">
+  <h2>Структура репозитория</h2>
+  <pre>artifactory-lab-students/
+├── README.md            <span class="c"># карта заданий и правила</span>
+├── docker-compose.yml   <span class="c"># готовый стенд</span>
+├── slides.html          <span class="c"># эта презентация</span>
+├── task01-run/          <span class="c"># 15 базовых заданий</span>
+├── task02-health/
+│   └── README.md        <span class="c"># в каждой папке — своя инструкция</span>
+├── ...
+├── task15-aql/
+├── pro01-cleanup/       <span class="c"># 10 заданий pro-уровня</span>
+├── ...
+└── pro10-ci/</pre>
+  <p>Выполняем <span class="hl">по порядку</span>: каждое задание опирается на предыдущее.</p>
+</section>
+
+<section class="slide">
+  <h2>Правила игры</h2>
   <ul>
-    <li><span class="hl">Блок A</span> — поднять стенд, создать репозиторий, опубликовать и скачать артефакт</li>
-    <li><span class="hl">Блок B</span> — API: паспорт артефакта, проверка checksum, поиск AQL, чистка старых версий</li>
-    <li><span class="hl">Блок C</span> — <code>publish.sh</code> + <code>deploy.sh</code>, права, dev→prod</li>
+    <li>Заходим в папку → читаем <code>README.md</code> → выполняем шаги</li>
+    <li>Команды даны целиком — их нужно просто выполнить</li>
+    <li>Пропуск <code>____</code> или пометка <span class="hl">ВПИШИТЕ</span> — подставить своё значение: пароль, версию, одно слово</li>
+    <li>В конце каждого README — <span class="hl">что сдать в отчёт</span> (скриншот или вывод команды)</li>
+    <li>Застряли — в главном README раздел «Если что-то не работает»</li>
   </ul>
-  <p>Материалы: <code>README.md</code> (раздатка) и <code>tasks.md</code> (задачи).</p>
-  <p class="note">Кто дойдёт до конца блока C — соберёт настоящий мини-CI/CD своими руками.</p>
+</section>
+
+<section class="slide">
+  <h2>Маршрут базовых заданий</h2>
+  <table>
+    <tr><th>Этап</th><th>Задания</th><th>Что осваиваем</th></tr>
+    <tr><td>Стенд</td><td>task01–task05</td><td>запуск, healthcheck, UI, репозиторий</td></tr>
+    <tr><td>Артефакт</td><td>task06–task11</td><td>собрать → опубликовать → скачать → сверить → новая версия</td></tr>
+    <tr><td>API</td><td>task12–task15</td><td>паспорт файла, конвейер, checksum, AQL</td></tr>
+  </table>
+  <p>Это те самые этапы жизненного цикла артефакта со слайда 8 — только руками.</p>
+</section>
+
+<section class="slide">
+  <h2>Пример задания: task07-upload</h2>
+  <pre><span class="c"># upload.sh — вся работа: вписать пароль</span>
+PASSWORD=<span class="hl">"____"</span>
+VERSION="1.0.0"
+
+curl -u admin:$PASSWORD -T myapp-$VERSION.tar.gz \
+  http://localhost:8081/artifactory/myapp-local/myapp/$VERSION/myapp-$VERSION.tar.gz</pre>
+  <ul>
+    <li>вписали пароль → <code>chmod +x upload.sh</code> → <code>./upload.sh</code></li>
+    <li>в ответе — JSON с контрольными суммами: <span class="hl">это и есть доказательство для отчёта</span></li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>Pro-уровень: что там</h2>
+  <table>
+    <tr><th>Задание</th><th>Тема</th></tr>
+    <tr><td>pro01–pro03</td><td>скрипты: чистка старых версий, публикация, деплой</td></tr>
+    <tr><td>pro04–pro05</td><td>безопасность: права пользователя developer, секреты вне кода</td></tr>
+    <tr><td>pro06–pro07</td><td>remote и virtual репозитории, кэширование</td></tr>
+    <tr><td>pro08</td><td>promotion dev → prod со сверкой sha256</td></tr>
+    <tr><td>pro09</td><td>pipeline.sh — мини-CI/CD целиком</td></tr>
+    <tr><td>pro10</td><td>GitHub Actions — настоящий CI</td></tr>
+  </table>
+  <p class="note">Здесь пропусков меньше, а думать — больше. Каркасы скриптов даны.</p>
+</section>
+
+<section class="slide">
+  <h2>Pro09: пайплайн своими руками</h2>
+  <pre><span class="c"># pipeline.sh — три этапа, как в настоящем CI</span>
+./publish.sh "$VERSION"   <span class="c"># 1. собрать и опубликовать</span>
+./deploy.sh               <span class="c"># 2. скачать последнюю версию</span>
+[[ "$ACTUAL" == "$VERSION" ]]  <span class="c"># 3. проверить, что ехало то</span></pre>
+  <ul>
+    <li><code>set -euo pipefail</code> — упасть на первой ошибке, а не ехать дальше</li>
+    <li>если третий этап не прошёл — весь пайплайн красный, как в Jenkins/GitLab CI</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>Pro10: GitHub Actions</h2>
+  <pre><span class="k">on:</span> push          <span class="c"># запуск при каждом пуше</span>
+<span class="k">jobs:</span>
+  build-and-publish:
+    <span class="k">runs-on:</span> ubuntu-latest
+    <span class="k">steps:</span>
+      - checkout
+      - упаковать myapp.tar.gz      <span class="c"># ваш tar</span>
+      - опубликовать через curl     <span class="c"># ваш curl</span></pre>
+  <ul>
+    <li>те же шаги, что вы делали руками, — но выполняет сервер GitHub</li>
+    <li>пароль — в Secrets репозитория, <span class="bad">никогда</span> в коде</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <h2>Оценка и отчёт</h2>
+  <ul>
+    <li>task01–task15 — <span class="hl">«удовлетворительно»</span></li>
+    <li>база + 4 любых pro — <span class="hl">«хорошо»</span></li>
+    <li>база + все pro — <span class="hl">«отлично»</span></li>
+  </ul>
+  <p>Отчёт: по каждому заданию — то, что написано в его README (скриншот, вывод команды, скрипт).</p>
+</section>
+
+<section class="slide">
+  <h2>Типовые ошибки</h2>
+  <table>
+    <tr><th>Симптом</th><th>Причина</th></tr>
+    <tr><td>долго не стартует</td><td>первый запуск 3–7 минут; мало RAM у Docker</td></tr>
+    <tr><td><code>401</code></td><td>старый пароль — нужен тот, что задали в мастере</td></tr>
+    <tr><td><code>404</code></td><td>опечатка в пути или репозиторий не создан</td></tr>
+    <tr><td><code>400 ...Pro</code></td><td>функция платная — так и задумано, делаем через UI</td></tr>
+    <tr><td>скрипт «not found»</td><td>запускаете не из той папки / нет <code>chmod +x</code></td></tr>
+  </table>
+  <p class="note">Сброс стенда в ноль: <code>docker compose down -v && docker compose up -d</code></p>
 </section>
 
 <section class="slide">
@@ -268,6 +422,7 @@
     <li>local / remote / virtual — три типа репозиториев</li>
     <li>Всё управляется через REST API — значит, автоматизируется bash'ем</li>
     <li>В прод едет тот же бит, что тестировался</li>
+    <li>Пайплайн CI — это те же скрипты, что вы написали сегодня</li>
   </ul>
   <p class="note">Вопросы?</p>
 </section>
