@@ -71,6 +71,9 @@ cd artifactory-lab-students
 ## Если что-то не работает
 
 - Стенд долго стартует — нормально до 3–7 минут: `docker compose logs -f`.
+- UI не открывается, хотя API жив — проверьте, что в `docker-compose.yml`
+  есть строка `JF_JFCONNECT_ENABLED: "false"` (сервис JFConnect в некоторых
+  окружениях ломает загрузку интерфейса).
 - `401 Unauthorized` — не тот пароль (нужен заданный при первом входе).
 - `400 ... Artifactory Pro` — функция только в платной версии, нормально.
 - Начать заново: `docker compose down -v && docker compose up -d`.
